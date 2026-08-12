@@ -1,0 +1,13 @@
+
+
+This script uses keepalived and haproxy for the VIP load balancer, kubeadm for the cluster lifecycle, Cilium for networking, Local Path Provisioner for storage, 
+and the Prometheus-Grafana stack for monitoring.PrerequisitesTwo clean Ubuntu 22.04 / 24.04 servers with static IPs.SSH root or sudo access on both nodes.
+A free IP address in your subnet to use as the Virtual IP (VIP).Deployment ScriptSave the following code as deploy-k8s.sh on both control plane nodes.
+
+
+Execution StepsRun on Node 1:Open deploy-k8s.sh and set CURRENT_NODE="1".Update VIP, INTERFACE, NODE_1_IP, and
+NODE_2_IP configuration blocks.Run the script:bashchmod +x deploy-k8s.sh && ./deploy-k8s.sh
+Use code with caution.At the end of execution, copy the generated terminal string containing
+kubeadm join ... --control-plane --certificate-key ....Run on Node 2:Open deploy-k8s.sh and set CURRENT_NODE="2". Ensure the network settings 
+match Node 1.Run the script:bashchmod +x deploy-k8s.sh && ./deploy-k8s.sh
+Use code with caution.Paste the copied kubeadm join command from Node 1 into your Node 2 terminal to complete your 2-node cluster initialization.
