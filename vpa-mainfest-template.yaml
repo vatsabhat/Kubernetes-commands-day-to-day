@@ -1,0 +1,63 @@
+---
+# ==============================================================================
+# SECTION 1: TARGET APPLICATION DEPLOYMENT
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dynamic-resource-app
+  namespace: default
+spec:
+  replicas: 2                    # Keep at least 2 copies to maintain uptime during VPA restarts
+  selector:
+    matchLabels:
+      app: heavy-compute-worker
+  template:
+    metadata:
+      labels:
+        app: heavy-compute-worker
+    spec:
+      containers:
+      - name: worker-container
+        image: nginx:1.25.3
+        resources:
+          requests:
+            memory: "128Mi"      # Small starting baseline; VPA will adjust this upward
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+---
+# ==============================================================================
+# SECTION 2: THE VERTICAL POD AUTOSCALER OBJECT
+# ==============================================================================
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: app-resource-optimizer
+  namespace: default
+spec:
+  # Links the VPA targeting system to your Deployment
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dynamic-resource-app
+    
+  # Update Policy controls how VPA implements changes
+  updatePolicy:
+    # Modes: "Auto" (restarts pod to apply), "Recreate" (restarts pod), 
+    # "Initial" (only calculates at creation), "Off" (Recommendation only mode)
+    updateMode: "Auto"           
+    
+  # Safeguard parameters to prevent runaway bills or microscopic allocations
+  resourcePolicy:
+    containerPolicies:
+    - containerName: 'worker-container'
+      minAllowed:
+        cpu: "50m"
+        memory: "64Mi"
+      maxAllowed:
+        cpu: "1000m"             # Cap at 1 full vCPU core max
+        memory: "1Gi"            # Cap at 1 Gigabyte of RAM max
+      controlledResources: ["cpu", "memory"]
