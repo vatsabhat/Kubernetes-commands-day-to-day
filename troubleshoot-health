@@ -1,0 +1,2 @@
+kubectl describe pod <pod-name>                 <-- Check the "Events" log at the bottom for Probe failures
+kubectl logs <pod-name> --tail=50               <-- Check your application server logs to see why it returned a 500 error
