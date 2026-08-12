@@ -1,0 +1,7 @@
+========================================================================================================================
+STEP                 ACTION TARGET               EXACT SCRIPT TERMINAL COMMAND TO EXECUTE
+========================================================================================================================
+1. REPO ADD          Register Chart Repository   helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+2. REPO UPDATE       Download Latency Indexes    helm repo update metrics-server
+3. INSTALL CHART     Deploy and Apply TLS Fixes  helm upgrade --install metrics-server metrics-server/metrics-server -n kube-system --set args={--kubelet-insecure-tls=true,--kubelet-preferred-address-types=InternalIP}
+========================================================================================================================
