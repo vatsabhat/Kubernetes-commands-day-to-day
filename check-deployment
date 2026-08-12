@@ -1,0 +1,3 @@
+kubectl apply -f deployment.yaml          <-- Launches/Updates everything in the file
+kubectl get all -l app=web-backend       <-- Monitors your pods, services, and setups
+kubectl describe pvc app-storage-pvc     <-- Troubleshoots if storage binding fails
