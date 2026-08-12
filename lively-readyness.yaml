@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: probed-app-deployment
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: probed-web
+  template:
+    metadata:
+      labels:
+        app: probed-web
+    spec:
+      containers:
+      - name: main-application
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        
+        # ==============================================================================
+        # HEALTH PROBE CONFIGURATIONS
+        # ==============================================================================
+
+        # READINESS PROBE: Determines if the Pod can accept network traffic.
+        # If this fails, the Pod is removed from the Service endpoints (no users hit it).
+        readinessProbe:
+          httpGet:
+            path: /ready                # The endpoint your app exposes for health checks
+            port: 80                    # The container port to query
+          initialDelaySeconds: 10       # How long to wait after container start before checking
+          periodSeconds: 5              # How often to perform the check
+          timeoutSeconds: 2             # Number of seconds after which the probe times out
+          successThreshold: 1           # Minimum consecutive successes to be considered ready
+          failureThreshold: 3           # Consecutive failures before marking it unready
+
+        # LIVENESS PROBE: Determines if the container is alive or deadlocked.
+        # If this fails, Kubernetes kills the container and automatically restarts it.
+        livenessProbe:
+          httpGet:
+            path: /healthz              # Often a dedicated minimal metrics/health URL
+            port: 80
+          initialDelaySeconds: 15       # Give your app buffer time to initialize/boot up
+          periodSeconds: 10             # Checked less frequently than readiness to save CPU
+          timeoutSeconds: 3             # Number of seconds after which the probe times out
+          failureThreshold: 3           # Destructive action: Restarts container after 3 drops
