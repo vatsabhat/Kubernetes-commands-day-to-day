@@ -1,0 +1,26 @@
+========================================================================================================================
+INFRA LAYER          DIAGNOSTIC TARGET           KUBECTL / LINUX TERMINAL SYSTEM TROUBLESHOOTING COMMAND
+========================================================================================================================
+CONTROL PLANE        Core Component Health       kubectl get blueprint,componentstatuses  (Or check kube-system pods)
+CONTROL PLANE        Control Plane API Health    kubectl get --raw='/readyz?verbose'
+CONTROL PLANE        Etcd Database Performance   kubectl get --raw='/metrics' | grep etcd_disk_wal_fsync_duration
+CONTROL PLANE        Kube-System Log Overview    kubectl logs -n kube-system -l component=kube-apiserver --tail=50
+------------------------------------------------------------------------------------------------------------------------
+NODE METRICS         Global Node Health State    kubectl get nodes -o wide
+NODE METRICS         Node Operating Conditions   kubectl describe nodes | grep -A 5 -E "Conditions|DiskPressure"
+NODE METRICS         Host Resource Allocations   kubectl top node
+NODE METRICS         Kubelet Daemon Log (SSH)    journalctl -u kubelet -n 100 --no-pager
+NODE METRICS         Container Runtime Log (SSH) journalctl -u containerd -n 100 --no-pager
+------------------------------------------------------------------------------------------------------------------------
+CLUSTER DEVIATIONS   Failed/Crashing Pod Audit   kubectl get pods -A --field-selector=status.phase!=Running
+CLUSTER DEVIATIONS   Cluster-Wide Warning Events kubectl get events -A --sort-by='.metadata.creationTimestamp'
+CLUSTER DEVIATIONS   Evicted Pod Clearance List  kubectl get pods -A | grep -i Evicted
+CLUSTER DEVIATIONS   Unscheduled Pod Tracing     kubectl get pods -A | grep -i Pending
+------------------------------------------------------------------------------------------------------------------------
+NETWORKING & DNS     CoreDNS Deployment Health   kubectl get deployment -n kube-system coredns
+NETWORKING & DNS     Cluster IPAM Exhaustion     kubectl describe clusterrole,networkpolicies --all-namespaces
+NETWORKING & DNS     Kube-Proxy Synchronisation  kubectl get daemonset kube-proxy -n kube-system
+------------------------------------------------------------------------------------------------------------------------
+STORAGE & VOLUME     Orphaned Volume Attachments kubectl get volumeattachments
+STORAGE & VOLUME     Storage Dynamic Provisioner kubectl get pods -A | grep -E "csi|provisioner"
+========================================================================================================================
