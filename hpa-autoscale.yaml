@@ -1,0 +1,86 @@
+---
+# ==============================================================================
+# SECTION 1: TARGET APPLICATION DEPLOYMENT (WITH EXPLICIT RESOURCE REQUESTS)
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scalable-web-app
+  namespace: default
+spec:
+  replicas: 2                    # Starting baseline number of pods
+  selector:
+    matchLabels:
+      app: web-worker
+  template:
+    metadata:
+      labels:
+        app: web-worker
+    spec:
+      containers:
+      - name: app-container
+        image: nginx:1.25.3
+        resources:
+          # WARNING: HPA calculations are based STRICTLY on percentages of your REQUESTS.
+          # If requests are missing, the HPA will fail to calculate utilization percentages.
+          requests:
+            memory: "256Mi"      # 100% Memory Target Baseline
+            cpu: "200m"          # 100% CPU Target Baseline
+          limits:
+            memory: "512Mi"      # Absolute ceiling before OOMKilled engine trips
+            cpu: "400m"
+        ports:
+        - containerPort: 80
+
+---
+# ==============================================================================
+# SECTION 2: THE HORIZONTAL POD AUTOSCALER (HPA CONFIGURATION)
+# ==============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-app-autoscaler
+  namespace: default
+spec:
+  # The target workload that this HPA will scale up and down automatically
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: scalable-web-app
+    
+  minReplicas: 2                 # The lower bound limit of pods during low traffic
+  maxReplicas: 10                # The upper bound limit of pods during severe spikes
+  
+  metrics:
+  # Metric 1: Track Memory to scale out before hitting the 512Mi limit ceiling
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        # 75% of 256Mi request = ~192Mi. If average pod memory crosses this, it scales up.
+        averageUtilization: 75   
+        
+  # Metric 2: Track CPU (HPA will scale if EITHER CPU or Memory target is breached)
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        # 80% of 200m request = 160m. If CPU crosses this, it scales up.
+        averageUtilization: 80   
+
+  # Advanced tuning to control how aggressively the cluster scales up or down
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0 # React instantly to sudden traffic spikes
+      policies:
+      - type: Percent
+        value: 100               # Allow doubling the pod count instantly if needed
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Wait 5 minutes before scaling down to prevent thrashing
+      policies:
+      - type: Percent
+        value: 10                # Scale down gradually (max 10% reduction per 15s)
+        periodSeconds: 15
