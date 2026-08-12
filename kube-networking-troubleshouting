@@ -1,0 +1,23 @@
+========================================================================================================================
+LAYER                 DIAGNOSTIC TARGET           KUBECTL / LINUX TERMINAL TROUBLESHOOTING COMMAND
+========================================================================================================================
+Layer 1: Cluster      Service Endpoints           kubectl get endpoints <service-name>
+Layer 1: Cluster      CoreDNS Validation          kubectl run net-test --rm -i --tty --image=busybox -- nslookup <service-name>
+------------------------------------------------------------------------------------------------------------------------
+Layer 2: CNI Mesh     DaemonSet Health Check      kubectl get pods -n kube-system -l k8s-app=calico-node
+Layer 2: CNI Mesh     Subnet/IPAM Logs            kubectl logs -n kube-system daemonset/calico-node --tail=100
+------------------------------------------------------------------------------------------------------------------------
+Layer 3: Kube-Proxy   Proxy Mode Detection        kubectl logs -n kube-system daemonset/kube-proxy | grep "Using"
+Layer 3: Kube-Proxy   iptables Rules (Node SSH)   iptables -t nat -L KUBE-SERVICES -n -v | grep <service-cluster-ip>
+Layer 3: Kube-Proxy   IPVS Rule Maps (Node SSH)   ipvsadm -ln -t <service-cluster-ip>:<port>
+------------------------------------------------------------------------------------------------------------------------
+Layer 4: Pod Namespace Attach Network Toolkit     kubectl debug -it <target-pod-name> --image=nicolaka/netshoot -- target-sys
+Layer 4: Pod Namespace Internal IP Allocation     ip address show       <-- Run this inside the netshoot debug shell
+Layer 4: Pod Namespace Pod Core Routing Table     ip route show         <-- Run this inside the netshoot debug shell
+------------------------------------------------------------------------------------------------------------------------
+Layer 5: Host NIC     Bridge Link Mapping         brctl show            <-- Run this via SSH on the underlying host node
+Layer 5: Host NIC     Interface Drop/Error Stats  ip -s link show eth0  <-- Run this via SSH on the underlying host node
+Layer 5: Host NIC     Hardware Queue Drops        ethtool -S eth0 | grep -E "drop|error"
+Layer 5: Host NIC     Physical Wire Sniffing      tcpdump -i eth0 port 80 or port 3306 -nn -vv
+Layer 5: Host NIC     CNI Bridge Sniffing         tcpdump -i cni0 -n
+========================================================================================================================
