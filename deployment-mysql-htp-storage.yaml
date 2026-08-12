@@ -1,0 +1,96 @@
+---
+# ==============================================================================
+# SECTION 1: PERSISTENT STORAGE APPLICATION DATA (PVC)
+# ==============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-storage-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce              # Mountable as read-write by a single node
+  resources:
+    requests:
+      storage: 10Gi              # Request 10 Gigabytes of storage space
+  # storageClassName: standard   # Uncomment and add your StorageClass if needed
+
+---
+# ==============================================================================
+# SECTION 2: THE APPLICATION DEPLOYMENT (CONTAINER LOGIC)
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robust-app-deployment
+  namespace: default
+  labels:
+    app.kubernetes.io/name: microservice-app
+spec:
+  replicas: 3                    # Run 3 running copies (replicas) of the pod
+  selector:
+    matchLabels:
+      app: web-backend           # MUST match the pod template label below
+  template:
+    metadata:
+      labels:
+        app: web-backend         # Label assigned to the individual Pods
+    spec:
+      # If pulling from a private registry (DockerHub, ECR, etc.)
+      imagePullSecrets:
+        - name: regcred          # Name of the secret created in your registry step
+      
+      containers:
+      - name: main-application
+        image: nginx:1.25.3      # Target image (Use explicit tags over :latest)
+        imagePullPolicy: IfNotPresent  # Avoid redownloading if image is cached
+        
+        ports:
+        - containerPort: 80      # Internal port the container application listens on
+          name: http-port
+          
+        # Resource constraints to prevent cluster noise and out-of-memory errors
+        resources:
+          requests:
+            memory: "128Mi"      # Initial memory reserved for the container
+            cpu: "250m"          # Initial CPU reserved (250 millicores = 0.25 vCPU)
+          limits:
+            memory: "256Mi"      # Maximum memory container can consume before OOMKilled
+            cpu: "500m"          # Maximum CPU container can burst up to
+            
+        # Environment variables configuration
+        env:
+        - name: APP_ENVIRONMENT
+          value: "production"
+        - name: DATABASE_URL
+          value: "mysql-external-svc:3306" # Connects to our previous MySQL service
+          
+        # Mount your storage directory inside the container
+        volumeMounts:
+        - name: data-volume
+          mountPath: /usr/share/nginx/html # Target folder path inside container
+          
+      # Define the volumes available to the pod specifications
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: app-storage-pvc # Binds directly to the PVC declared above
+
+---
+# ==============================================================================
+# SECTION 3: NETWORK ROUTING EXPOSURE (SERVICE)
+# ==============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-external-service
+  namespace: default
+spec:
+  type: LoadBalancer             # Exposes externally via Cloud IP or Minikube Tunnel
+  ports:
+  - port: 80                     # External access port routing into the cluster
+    targetPort: 80               # Forwards traffic to containerPort 80 inside Pod
+    protocol: TCP
+    name: http
+  selector:
+    app: web-backend             # TARGETS: Pods with label "app: web-backend"
