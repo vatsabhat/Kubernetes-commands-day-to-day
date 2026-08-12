@@ -1,0 +1,8 @@
+========================================================================================================================
+OBJECTIVE            KUBECTL MONITORING AND TROUBLESHOOTING COMMANDS
+========================================================================================================================
+Monitor HPA Status   kubectl get hpa web-app-autoscaler -w
+Inspect HPA Events   kubectl describe hpa web-app-autoscaler
+Check Live Metrics   kubectl top pods -l app=web-worker
+Simulate CPU Load    kubectl run vcpu-load --rm -i -t --image=busybox -- md5sum /dev/zero
+========================================================================================================================
