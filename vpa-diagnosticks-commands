@@ -1,0 +1,9 @@
+========================================================================================================================
+OPERATIONAL STEP     DIAGNOSTIC TARGET           KUBECTL VERIFICATION SCRIPT COMMAND
+========================================================================================================================
+1. VIEW VPA STATUS   Inspect Recommendations     kubectl get vpa app-resource-optimizer
+2. DETAIL AUDIT      Read Target Calculations    kubectl describe vpa app-resource-optimizer
+3. LIVE POD WATCH    Track Dynamic Restarts      kubectl get pods -l app=heavy-compute-worker -w
+4. INJECT LOAD       Simulate Heavy Memory Load  kubectl run mem-load --rm -i -t --image=polinux/stress -- stress --vm 1 --vm-bytes 500M
+5. RUNTIME CHECK     Verify Newly Injected Specs  kubectl get pod <new-pod-name> -o jsonpath='{.spec.containers[*].resources}'
+========================================================================================================================
