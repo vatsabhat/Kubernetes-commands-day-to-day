@@ -1,0 +1,24 @@
+========================================================================================================================
+CATEGORY             DIAGNOSTIC TARGET           KUBECTL / TERMINAL COMMAND FOR OPERATIONS & TROUBLESHOOTING
+========================================================================================================================
+DEPLOY IMAGES        Run Standalone Pod          kubectl run test-pod --image=<registry>/<repo>/<image>:<tag>
+DEPLOY IMAGES        Create Multi-Replica Deploy kubectl create deployment app-deploy --image=<image> --replicas=3
+DEPLOY IMAGES        Update Container Image      kubectl set image deployment/app-deploy <container-name>=<new-image>:<tag>
+DEPLOY IMAGES        Rollback Image Update       kubectl rollout undo deployment/app-deploy
+DEPLOY IMAGES        Check Live Image Tag        kubectl get pods -o jsonpath='{.items[*].spec.containers[*].image}'
+------------------------------------------------------------------------------------------------------------------------
+PRIVATE REPOS        Create Docker-Registry Secret kubectl create secret docker-registry regcred \
+                                                   --docker-server=<registry-url> --docker-username=<user> \
+                                                   --docker-password=<pass> --docker-email=<email>
+PRIVATE REPOS        Verify Regcred Configuration  kubectl get secret regcred -o yaml
+PRIVATE REPOS        Patch Default ServiceAccount  kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "regcred"}]}'
+------------------------------------------------------------------------------------------------------------------------
+TROUBLESHOOTING      Track Image Pull Failures     kubectl get pods | grep -E "ImagePullBackOff|ErrImagePull"
+TROUBLESHOOTING      Inspect Image Pull Event Logs kubectl describe pod <pod-name>
+TROUBLESHOOTING      Check Node Disk Image Space   kubectl describe node <node-name> | grep -A 5 -i "Taints"
+TROUBLESHOOTING      Force Immediate Image Pull    kubectl set env deployment/app-deploy REFRESH_DATE=$(date +%s)
+------------------------------------------------------------------------------------------------------------------------
+NODE LEVEL (SSH)     List Cached Local Images      crictl images         <-- Run via SSH on the worker node
+NODE LEVEL (SSH)     Manually Pull Missing Image   crictl pull <image>   <-- Run via SSH on the worker node
+NODE LEVEL (SSH)     Inspect Container Engine Logs journalctl -u containerd -n 100 <-- Run via SSH on the worker node
+========================================================================================================================
