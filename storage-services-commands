@@ -1,0 +1,24 @@
+========================================================================================================================
+LAYER / RESOURCE     DIAGNOSTIC TARGET           KUBECTL / LINUX TERMINAL TROUBLESHOOTING COMMAND
+========================================================================================================================
+SERVICES             Selector Verification       kubectl get svc <service-name> -o wide
+SERVICES             Endpoint Traffic Alignment  kubectl get endpoints <service-name>
+SERVICES             Detailed Event Logging      kubectl describe svc <service-name>
+SERVICES             ClusterIP Routing Rules     kubectl get svc --all-namespaces | grep -i clusterip
+SERVICES             Kube-Proxy Synchronisation  kubectl logs -n kube-system -l k8s-app=kube-proxy --tail=100
+SERVICES             LoadBalancer Ingress status kubectl get svc <service-name> -o jsonpath='{.status.loadBalancer}'
+SERVICES             CoreDNS Record Verification kubectl run dns-test --rm -i -t --image=busybox -- nslookup <service-name>
+------------------------------------------------------------------------------------------------------------------------
+STORAGE (PVC/PV)     PVC Status & Volume Binding kubectl get pvc --all-namespaces
+STORAGE (PVC/PV)     PV Availability Check       kubectl get pv
+STORAGE (PVC/PV)     PVC Event / Failure Audit   kubectl describe pvc <pvc-name>
+STORAGE (PVC/PV)     PV Capacity & Access Modes  kubectl describe pv <pv-name>
+STORAGE (PVC/PV)     StorageClass Provisioning   kubectl get storageclass
+STORAGE (PVC/PV)     StorageClass Configurations kubectl describe storageclass <storageclass-name>
+------------------------------------------------------------------------------------------------------------------------
+STORAGE (POD/NODE)   Pod Volume Mount Errors     kubectl describe pod <pod-name> | grep -A 10 -i "Volumes:"
+STORAGE (POD/NODE)   CSI Plugin DaemonSet Health kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-ebs-csi-driver
+STORAGE (POD/NODE)   CSI Driver Error Logs       kubectl logs -n kube-system deployment/csi-provisioner -c csi-provisioner
+STORAGE (POD/NODE)   Node Disk Space Capacity    df -h                   <-- Run via SSH directly on the Worker Node
+STORAGE (POD/NODE)   Kubelet Mount Verification  mount | grep kubernetes  <-- Run via SSH directly on the Worker Node
+================================================================================================================--------
