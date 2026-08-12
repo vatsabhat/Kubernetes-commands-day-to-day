@@ -1,0 +1,61 @@
+Cluster Info & Context Setup
+
+kubectl version
+kubectl cluster-info
+kubectl config get-contexts
+
+kubectl config use-context <context-name>
+
+
+#### Creating & Applying Resources
+
+kubectl apply -f <file.yaml>
+kubectl diff -f <file.yaml>
+kubectl run <pod-name> --image=<image-name>
+kubectl create deployment <deploy-name> --image=<image-name>
+
+Viewing & Inspecting Resources
+kubectl get pods
+kubectl get pods -A
+kubectl get pods --all-namespaces
+kubectl get pods -o wide 
+kubectl get services
+kubectl describe <resource-type> <resource-name>
+
+
+Debugging & Troubleshooting
+kubectl logs <pod-name>
+kubectl logs -f <pod-name>
+kubectl exec -it <pod-name> -- /bin/sh
+kubectl port-forward <pod-name> <local-port>:<pod-port>
+kubectl top pod
+kubectl top pod --all-namespaces --sort-by=memory
+kubectl get events --sort-by='.metadata.creationTimestamp'
+kubectl logs <pod-name> --previous 
+
+Modifying & Deleting Resources
+kubectl scale deployment <deploy-name> --replicas=<number>
+kubectl edit <resource-type> <resource-name>
+kubectl delete pod <pod-name> 
+kubectl delete -f <file.yaml>
+
+Cluster Node Maintenance
+kubectl get nodes
+kubectl cordon <node-name>
+kubectl drain <node-name> --ignore-daemonsets
+kubectl uncordon <node-name>
+
+Deploying a New Application
+kubectl create deployment my-app --image=nginx --replicas=3
+kubectl expose deployment my-app --type=NodePort --port=80 --target-port=80
+kubectl apply -f deployment.yaml -f service.yaml
+kubectl rollout status deployment/my-app
+
+Imperative Method
+
+kubectl create deployment nginx-server --image=nginx --replicas=2
+kubectl expose deployment nginx-server --type=LoadBalancer --port=80 --target-port=80
+kubectl create deployment mysql-db --image=mysql:8.0 -- \
+  --env="MYSQL_ROOT_PASSWORD=my-secure-password"
+
+kubectl expose deployment mysql-db --type=LoadBalancer --port=3306 --target-port=3306
