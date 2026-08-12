@@ -1,0 +1,17 @@
+Checklist 1: Out-of-Memory (OOMKilled) Cluster Spikes
+========================================================================================================================
+PHASE                ACTION ITEM                 KUBECTL / TERMINAL COMMAND FOR MEMORY DIAGNOSTICS & CLEANUP
+========================================================================================================================
+1. IDENTIFY          Locate OOMKilled Pods       kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.status.containerStatuses[*].lastState.terminated.reason}{"\n"}{end}' | grep OOMKilled
+1. IDENTIFY          Filter by Exit Code 137     kubectl get pods -A --field-selector=status.phase=Failed | grep -E "137|OOMKilled"
+------------------------------------------------------------------------------------------------------------------------
+2. TRACE ROOT        Review Post-Mortem Logs     kubectl logs <pod-name> -n <namespace> --previous --tail=100
+2. TRACE ROOT        Inspect Termination Event   kubectl describe pod <pod-name> -n <namespace> | grep -A 5 -B 2 OOMKilled
+2. TRACE ROOT        Identify Memory Hogs        kubectl top pod -A --sort-by=memory | head -n 15
+------------------------------------------------------------------------------------------------------------------------
+3. NODE IMPACT       Check Node Memory Pressure  kubectl get nodes -o custom-columns=NAME:.metadata.name,MEM-PRESSURE:.status.conditions[?(@.type=="MemoryPressure")].status
+3. NODE IMPACT       Review Host Kernel OOM Logs dmesg -T | grep -i -E "oom-killer|kill process" <-- Run via SSH on Node
+------------------------------------------------------------------------------------------------------------------------
+4. REMEDIATION       Find Pod Limits vs Requests kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].resources}'
+4. REMEDIATION       Purge Dead Evicted Pods     kubectl delete pods -A --field-selector=status.phase=Failed
+========================================================================================================================
