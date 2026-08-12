@@ -1,0 +1,16 @@
+Checklist 2: Etcd Database Backup and Restore
+
+========================================================================================================================
+OPERATION            OBJECTIVE                   ETCDCTL / TERMINAL SCRIPT EXECUTED DIRECTLY ON CONTROL PLANE NODE
+========================================================================================================================
+BACKUP               Set API Version to v3       export ETCDCTL_API=3
+BACKUP               Save Secure Snapshot        etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /backup/etcd-snapshot.db
+BACKUP               Verify Integrity of Backup  etcdctl --write-out=table snapshot status /backup/etcd-snapshot.db
+------------------------------------------------------------------------------------------------------------------------
+RESTORE (CRITICAL)   Stop the Local Kubelet      systemctl stop kubelet
+RESTORE (CRITICAL)   Stop Control Plane Pods     mv /etc/kubernetes/manifests/* /tmp/manifests-backup/
+RESTORE (CRITICAL)   Restore DB to New Directory etcdctl --data-dir=/var/lib/etcd-from-backup snapshot restore /backup/etcd-snapshot.db
+RESTORE (CRITICAL)   Update Static Manifest Path sed -i 's|/var/lib/etcd|/var/lib/etcd-from-backup|g' /tmp/manifests-backup/etcd.yaml
+RESTORE (CRITICAL)   Restore Control Plane Pods  mv /tmp/manifests-backup/* /etc/kubernetes/manifests/
+RESTORE (CRITICAL)   Restart the Local Kubelet   systemctl start kubelet
+========================================================================================================================
