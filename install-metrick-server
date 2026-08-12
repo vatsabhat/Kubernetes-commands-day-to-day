@@ -1,0 +1,6 @@
+========================================================================================================================
+STEP                 ACTION TARGET               EXACT SCRIPT TERMINAL COMMAND TO EXECUTE
+========================================================================================================================
+1. APPLY MANIFEST    Deploy Core Components      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+2. VERIFY ROLLOUT    Check Pod Deployment State  kubectl get deployment metrics-server -n kube-system
+========================================================================================================================
