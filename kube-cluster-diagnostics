@@ -1,0 +1,6 @@
+echo "=== 1. CLUSTER VERSION & INFO ===" && kubectl cluster-info
+echo "=== 2. NODE STATUSES ===" && kubectl get nodes -o wide
+echo "=== 3. RESOURCE USAGE ===" && kubectl top node && kubectl top pod -A
+echo "=== 4. SYSTEM POD STATUS ===" && kubectl get pods -n kube-system
+echo "=== 5. NON-RUNNING PODS ===" && kubectl get pods -A --field-selector=status.phase!=Running
+echo "=== 6. RECENT WARNINGS ===" && kubectl get events -A --field-selector type=Warning --sort-by='.metadata.creationTimestamp' | tail -n 20
